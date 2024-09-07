@@ -1,0 +1,65 @@
+package main
+
+import (
+	"fmt"
+	"math/rand"
+	"time"
+)
+
+const NumberOfPizzas = 10
+
+var currentPizzaNr = 0
+
+type pizza struct {
+	message string
+	success bool
+}
+
+type pizzaJob struct {
+	orders chan pizza
+	quit   chan bool
+}
+
+func makePizza(i *int) pizza {
+	*i++
+	r := rand.Intn(10)
+	if r < 4 {
+		return pizza{
+			message: "no ingredients",
+			success: false}
+	}
+	return pizza{message: "pizza is ready", success: true}
+	// rand pizza ok vs pizza !ok
+}
+
+func pizzeria(job *pizzaJob) {
+	for currentPizzaNr <= NumberOfPizzas {
+		p := makePizza(&currentPizzaNr)
+		job.orders <- p
+	}
+	close(job.orders)
+
+	job.quit <- true
+	close(job.quit)
+}
+
+func main() {
+	rand.Seed(time.Now().Unix())
+	// producer
+	j := &pizzaJob{
+		orders: make(chan pizza),
+		quit:   make(chan bool),
+	}
+	go pizzeria(j)
+
+	// consumer
+	for {
+		select {
+		case o := <-j.orders:
+			fmt.Println(o.message)
+		case <-j.quit:
+			fmt.Println("done")
+			return
+		}
+	}
+}
