@@ -1,8 +1,0 @@
-go 1.22.3
-
-use (
-	./dining
-	./producer_consumer
-	./sleeping-barber
-	./sleeping-barber-my-version
-)
